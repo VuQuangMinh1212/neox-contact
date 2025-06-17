@@ -100,6 +100,7 @@ export default function ProfilePage() {
             <div
               className="contact-card hover:bg-zinc-600 transition-colors p-2"
               style={{ height: "48px" }}
+              onClick={() => (window.location.href = "https://neox.vn/")}
             >
               <LinkIcon size={20} />
               <span>https://neox.vn/</span>
