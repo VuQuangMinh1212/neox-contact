@@ -24,6 +24,7 @@ export default function ProfilePage() {
                 width={400}
                 height={400}
                 className="object-cover object-center w-full h-full"
+                priority={true}
               />
             </div>
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">
