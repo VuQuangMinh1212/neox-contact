@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Phone, Mail, Share2, Building, LinkIcon, MapPin } from "lucide-react";
+import { useEffect } from "react";
 
 export default function ProfilePage() {
   const phoneNumber = "(+84) 93 780 2193";
@@ -10,6 +11,24 @@ export default function ProfilePage() {
     window.open(`tel:${phoneNumber.replace(/[^0-9]/g, "")}`, "_self");
   };
 
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.href = "/image-profile.JPG";
+    link.as = "image";
+    document.head.appendChild(link);
+    const mainImg = new window.Image() as HTMLImageElement;
+    mainImg.src = "/image-profile.JPG";
+    mainImg.onload = () => {
+      const blurImg = document.querySelector('img[src="/blur-image.jpg"]');
+      if (blurImg instanceof HTMLElement) blurImg.style.opacity = "0";
+    };
+    return () => {
+      document.head.removeChild(link);
+      mainImg.onload = null;
+    };
+  }, []);
+
   return (
     <div className="min-h-screen">
       <div className="relative min-h-[24rem]">
@@ -17,15 +36,39 @@ export default function ProfilePage() {
         <div className="absolute top-[5rem] left-0 w-full h-[4rem] md:h-[5rem] bg-black" />
         <div className="relative z-10 bg-transparent flex items-center justify-center mt-[-2rem] pt-16">
           <div className="container mx-auto px-0 md:px-0 lg:px-0 flex flex-col items-center">
-            <div className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-white overflow-hidden mb-2 bg-red-500 p-0 m-0">
+            <div className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-white overflow-hidden mb-2 p-0 m-0 relative">
               <Image
                 src="/image-profile.JPG"
                 alt="Nguyễn Hoàng Mai"
                 width={400}
                 height={400}
-                className="object-cover object-center w-full h-full"
+                className="object-cover object-center w-full h-full transition-opacity duration-300"
                 priority={true}
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD/2wBDAAoHBwkHBgoJCAkKLQoMDwwQEB..."
+                onLoadingComplete={(img) => (img.style.opacity = "1")}
               />
+              <Image
+                src="/blur-image.jpg"
+                alt="Blurred Nguyễn Hoàng Mai"
+                width={400}
+                height={400}
+                className="object-cover object-center w-full h-full absolute top-0 left-0 opacity-100"
+                style={{ zIndex: 0 }}
+              />
+              <style jsx>{`
+                img {
+                  opacity: 0;
+                }
+                .transition-opacity {
+                  position: relative;
+                  z-index: 1;
+                }
+                img[src="/blur-image.jpg"] {
+                  opacity: 1;
+                  transition: opacity 0.3s ease-out;
+                }
+              `}</style>
             </div>
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">
               Nguyễn Hoàng Mai
