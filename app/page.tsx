@@ -24,6 +24,33 @@ export default function ProfilePage() {
     };
   }, []);
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = "Check out my profile - Nguyễn Hoàng Mai";
+    const text = "International Business Solutions Consultant";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+      } catch (error) {
+        console.log("Sharing failed", error);
+      }
+    } else {
+      const shareLinks = {
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+          url
+        )}`,
+        twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+          `${title}\n${text}\n${url}`
+        )}`,
+        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+          url
+        )}`,
+      };
+      Object.values(shareLinks).forEach((link) => window.open(link, "_blank"));
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <div className="relative min-h-[24rem]">
@@ -72,7 +99,10 @@ export default function ProfilePage() {
               >
                 <Mail size={20} />
               </button>
-              <button className="icon-button hover:bg-zinc-500 transition-colors">
+              <button
+                className="icon-button hover:bg-zinc-500 transition-colors"
+                onClick={handleShare}
+              >
                 <Share2 size={20} />
               </button>
             </div>
