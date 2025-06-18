@@ -16,16 +16,11 @@ export default function ProfilePage() {
     link.rel = "preload";
     link.href = "/image-profile.JPG";
     link.as = "image";
+    link.fetchPriority = "high";
     document.head.appendChild(link);
-    const mainImg = new window.Image() as HTMLImageElement;
-    mainImg.src = "/image-profile.JPG";
-    mainImg.onload = () => {
-      const blurImg = document.querySelector('img[src="/blur-image.jpg"]');
-      if (blurImg instanceof HTMLElement) blurImg.style.opacity = "0";
-    };
+
     return () => {
       document.head.removeChild(link);
-      mainImg.onload = null;
     };
   }, []);
 
@@ -42,33 +37,16 @@ export default function ProfilePage() {
                 alt="Nguyễn Hoàng Mai"
                 width={400}
                 height={400}
-                className="object-cover object-center w-full h-full transition-opacity duration-300"
-                priority={true}
+                priority
+                fetchPriority="high"
+                loading="eager"
                 placeholder="blur"
-                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD/2wBDAAoHBwkHBgoJCAkKLQoMDwwQEB..."
-                onLoadingComplete={(img) => (img.style.opacity = "1")}
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAANAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABQQG/8QAIhAAAQMDBAMBAAAAAAAAAAAAAQIDBAARIQUSMUETFWFx/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AFdQ1FxEyR45BbTE2bkWwq+VX+EHnq1Oc5GRWGbdV6WQ6olS5Us7yT0Be35USZL4SAl50ADACzYUH//Z"
+                className="object-cover object-center w-full h-full transition-opacity duration-300"
+                onLoadingComplete={(img) => {
+                  img.style.opacity = "1";
+                }}
               />
-              <Image
-                src="/blur-image.jpg"
-                alt="Blurred Nguyễn Hoàng Mai"
-                width={400}
-                height={400}
-                className="object-cover object-center w-full h-full absolute top-0 left-0 opacity-100"
-                style={{ zIndex: 0 }}
-              />
-              <style jsx>{`
-                img {
-                  opacity: 0;
-                }
-                .transition-opacity {
-                  position: relative;
-                  z-index: 1;
-                }
-                img[src="/blur-image.jpg"] {
-                  opacity: 1;
-                  transition: opacity 0.3s ease-out;
-                }
-              `}</style>
             </div>
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">
               Nguyễn Hoàng Mai
