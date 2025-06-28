@@ -13,7 +13,7 @@ git url: 'https://github.com/VuQuangMinh1212/neox-contact.git', branch: 'main'
 }
 stage('Build') {
 steps {
-sh 'npm install'
+sh 'npm install --force'
 sh 'npm run build'
 }
 }
