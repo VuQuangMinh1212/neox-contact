@@ -1,14 +1,32 @@
 "use client";
 
 import Image from "next/image";
-import { Phone, Mail, Share2, Building, LinkIcon, MapPin } from "lucide-react";
-import { useEffect } from "react";
+import { Phone, Mail, Share2, Building, LinkIcon, MapPin, Download, Copy, Check, QrCode } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import QRCodeModal from "../components/QRCodeModal";
 
 export default function ProfilePage() {
   const phoneNumber = "(+84) 93 780 2193";
+  const [isLoading, setIsLoading] = useState(false);
+  const [copiedText, setCopiedText] = useState("");
+  const [isVisible, setIsVisible] = useState(false);
+  const [showCopyNotification, setShowCopyNotification] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCall = () => {
     window.open(`tel:${phoneNumber.replace(/[^0-9]/g, "")}`, "_self");
+  };
+
+  const copyToClipboard = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedText(type);
+      setTimeout(() => setCopiedText(""), 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
   };
 
   useEffect(() => {
@@ -19,12 +37,30 @@ export default function ProfilePage() {
     link.fetchPriority = "high";
     document.head.appendChild(link);
 
+    // Intersection Observer for animations
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (profileRef.current) {
+      observer.observe(profileRef.current);
+    }
+
     return () => {
       document.head.removeChild(link);
+      observer.disconnect();
     };
   }, []);
 
   const handleShare = async () => {
+    setIsLoading(true);
     const url = window.location.href;
     const title = "Check out my profile - Nguyễn Hoàng Mai";
     const text = "International Business Solutions Consultant";
@@ -36,29 +72,35 @@ export default function ProfilePage() {
         console.log("Sharing failed", error);
       }
     } else {
-      const shareLinks = {
-        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-          url
-        )}`,
-        twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          `${title}\n${text}\n${url}`
-        )}`,
-        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-          url
-        )}`,
-      };
-      Object.values(shareLinks).forEach((link) => window.open(link, "_blank"));
+      // Fallback: Copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopiedText("link");
+        setTimeout(() => setCopiedText(""), 2000);
+      } catch (error) {
+        // Fallback to social sharing
+        const shareLinks = {
+          facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+          twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title}\n${text}\n${url}`)}`,
+          linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+        };
+        Object.values(shareLinks).forEach((link) => window.open(link, "_blank"));
+      }
     }
+    setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen gradient-bg">
       <div className="relative min-h-[24rem]">
         <div className="absolute top-0 left-0 w-full h-[5rem] bg-black" />
         <div className="absolute top-[5rem] left-0 w-full h-[4rem] md:h-[5rem] bg-black" />
-        <div className="relative z-10 bg-transparent flex items-center justify-center mt-[-2rem] pt-16">
+        <div 
+          ref={profileRef}
+          className={`relative z-10 bg-transparent flex items-center justify-center mt-[-2rem] pt-16 ${isVisible ? 'fade-in' : 'opacity-0'}`}
+        >
           <div className="container mx-auto px-0 md:px-0 lg:px-0 flex flex-col items-center">
-            <div className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-white overflow-hidden mb-2 p-0 m-0 relative">
+            <div className={`w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-white overflow-hidden mb-2 p-0 m-0 relative ${isVisible ? 'scale-in' : 'opacity-0'}`}>
               <Image
                 src="/image-profile.JPG"
                 alt="Nguyễn Hoàng Mai"
@@ -70,40 +112,55 @@ export default function ProfilePage() {
                 placeholder="blur"
                 blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAANAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABQQG/8QAIhAAAQMDBAMBAAAAAAAAAAAAAQIDBAARIQUSMUETFWFx/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AFdQ1FxEyR45BbTE2bkWwq+VX+EHnq1Oc5GRWGbdV6WQ6olS5Us7yT0Be35USZL4SAl50ADACzYUH//Z"
                 className="object-cover object-center w-full h-full transition-opacity duration-300"
-                onLoadingComplete={(img) => {
-                  img.style.opacity = "1";
+                onLoad={(img) => {
+                  img.currentTarget.style.opacity = "1";
                 }}
               />
             </div>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">
+            <h1 className={`text-xl md:text-2xl lg:text-3xl font-bold text-white ${isVisible ? 'slide-up' : 'opacity-0'}`}>
               Nguyễn Hoàng Mai
             </h1>
-            <p className="text-sm md:text-base text-white mb-1">
+            <p className={`text-sm md:text-base text-white mb-1 ${isVisible ? 'slide-up' : 'opacity-0'}`}>
               International Business
             </p>
-            <p className="text-sm md:text-base text-white mb-5">
+            <p className={`text-sm md:text-base text-white mb-5 ${isVisible ? 'slide-up' : 'opacity-0'}`}>
               Solutions Consultant
             </p>
-            <div className="flex gap-6 mb-6">
+            <div className={`flex gap-6 mb-6 ${isVisible ? 'slide-up' : 'opacity-0'}`}>
               <button
-                className="icon-button hover:bg-zinc-500 transition-colors"
+                className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
                 onClick={handleCall}
+                title="Call me"
               >
                 <Phone size={20} />
               </button>
               <button
-                className="icon-button hover:bg-zinc-500 transition-colors"
-                onClick={() =>
-                  (window.location.href = "mailto:nguyenhoangmai193@gmail.com")
-                }
+                className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
+                onClick={() => copyToClipboard("nguyenhoangmai193@gmail.com", "email")}
+                title="Copy email"
               >
-                <Mail size={20} />
+                {copiedText === "email" ? <Check size={20} className="text-green-400" /> : <Mail size={20} />}
               </button>
               <button
-                className="icon-button hover:bg-zinc-500 transition-colors"
+                className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
                 onClick={handleShare}
+                disabled={isLoading}
+                title="Share profile"
               >
-                <Share2 size={20} />
+                {isLoading ? (
+                  <div className="loading-spinner" />
+                ) : copiedText === "link" ? (
+                  <Check size={20} className="text-green-400" />
+                ) : (
+                  <Share2 size={20} />
+                )}
+              </button>
+              <button
+                className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
+                onClick={() => setIsQRModalOpen(true)}
+                title="Show QR Code"
+              >
+                <QrCode size={20} />
               </button>
             </div>
             {false && (
@@ -129,33 +186,55 @@ export default function ProfilePage() {
           </div>
           <div className="space-y-4 overflow-y-auto flex-1 pr-2">
             <div
-              className="contact-card hover:bg-zinc-600 transition-colors p-2"
+              className="contact-card hover:bg-zinc-600 transition-colors p-2 cursor-pointer group stagger-animation"
               style={{ height: "48px" }}
+              onClick={() => copyToClipboard("NEOX Company", "company")}
             >
               <Building size={20} />
               <span>NEOX Company</span>
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                {copiedText === "company" ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+              </div>
             </div>
             <div
-              className="contact-card hover:bg-zinc-600 transition-colors p-2"
+              className="contact-card hover:bg-zinc-600 transition-colors p-2 cursor-pointer group stagger-animation"
               style={{ height: "48px" }}
+              onClick={() => {
+                copyToClipboard("1900 633 864", "phone");
+                // Also allow calling
+                window.open("tel:1900633864", "_self");
+              }}
             >
               <Phone size={20} />
               <span>1900 633 864</span>
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                {copiedText === "phone" ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+              </div>
             </div>
             <div
-              className="contact-card hover:bg-zinc-600 transition-colors p-2"
+              className="contact-card hover:bg-zinc-600 transition-colors p-2 cursor-pointer group stagger-animation"
               style={{ height: "48px" }}
+              onClick={() => copyToClipboard("nguyenhoangmai193@gmail.com", "email")}
             >
               <Mail size={20} />
               <span>nguyenhoangmai193@gmail.com</span>
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                {copiedText === "email" ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+              </div>
             </div>
             <div
-              className="contact-card hover:bg-zinc-600 transition-colors p-2"
+              className="contact-card hover:bg-zinc-600 transition-colors p-2 cursor-pointer group stagger-animation"
               style={{ height: "48px" }}
-              onClick={() => (window.location.href = "https://neox.vn/")}
+              onClick={() => {
+                copyToClipboard("https://neox.vn/", "website");
+                window.open("https://neox.vn/", "_blank");
+              }}
             >
               <LinkIcon size={20} />
               <span>https://neox.vn/</span>
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                {copiedText === "website" ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+              </div>
             </div>
             <div className="contact-card flex-col items-start hover:bg-zinc-600 transition-colors">
               <div
@@ -191,8 +270,12 @@ export default function ProfilePage() {
           </div>
           <div className="space-y-4 pr-2">
             <div
-              className="contact-card hover:bg-zinc-700 transition-colors p-2"
+              className="contact-card hover:bg-zinc-700 transition-colors p-2 cursor-pointer group"
               style={{ height: "48px" }}
+              onClick={() => {
+                copyToClipboard("(+84) 93 780 21 93", "whatsapp");
+                window.open("https://wa.me/84937802193", "_blank");
+              }}
             >
               <div className="w-6 h-6 flex items-center justify-center">
                 <svg
@@ -214,10 +297,17 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <span>(+84) 93 780 21 93</span>
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                {copiedText === "whatsapp" ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+              </div>
             </div>
             <div
-              className="contact-card hover:bg-zinc-700 transition-colors p-2"
+              className="contact-card hover:bg-zinc-700 transition-colors p-2 cursor-pointer group"
               style={{ height: "48px" }}
+              onClick={() => {
+                copyToClipboard("(+84) 93 780 21 93", "zalo");
+                window.open("https://zalo.me/84937802193", "_blank");
+              }}
             >
               <div className="w-6 h-6 flex items-center justify-center">
                 <svg
@@ -255,10 +345,14 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <span>(+84) 93 780 21 93</span>
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                {copiedText === "zalo" ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+              </div>
             </div>
             <div
-              className="contact-card hover:bg-zinc-700 transition-colors p-2"
+              className="contact-card hover:bg-zinc-700 transition-colors p-2 cursor-pointer group"
               style={{ height: "48px" }}
+              onClick={() => copyToClipboard("nhmei12", "wechat")}
             >
               <div className="w-6 h-6 flex items-center justify-center">
                 <svg
@@ -292,6 +386,9 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <span>ID: nhmei12</span>
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                {copiedText === "wechat" ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+              </div>
             </div>
             <div
               className="contact-card hover:bg-zinc-700 transition-colors p-2"
@@ -323,8 +420,9 @@ export default function ProfilePage() {
               <span>Nguyễn Mai</span>
             </div>
             <button
-              className="w-full bg-zinc-700 hover:bg-zinc-600 rounded-md p-4 mt-20 !important:mt-16 text-center font-medium transition-colors"
+              className="w-full bg-zinc-700 hover:bg-zinc-600 rounded-md p-4 mt-20 !important:mt-16 text-center font-medium transition-colors pulse-on-hover flex items-center justify-center gap-2"
               onClick={() => {
+                setIsLoading(true);
                 const vCard = `BEGIN:VCARD
 VERSION:3.0
 FN:Nguyễn Hoàng Mai
@@ -340,16 +438,53 @@ END:VCARD`;
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = "contact.vcf";
+                a.download = "NguyenHoangMai_Contact.vcf";
                 a.click();
                 window.URL.revokeObjectURL(url);
+                setTimeout(() => setIsLoading(false), 1000);
               }}
+              disabled={isLoading}
             >
-              Save Contact
+              {isLoading ? (
+                <>
+                  <div className="loading-spinner" />
+                  <span>Downloading...</span>
+                </>
+              ) : (
+                <>
+                  <Download size={20} />
+                  <span>Save Contact</span>
+                </>
+              )}
             </button>
           </div>
         </div>
       </section>
+
+      {/* Toast notification for copy actions */}
+      {copiedText && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg fade-in flex items-center gap-2 z-50">
+          <Check size={16} />
+          <span>
+            {copiedText === "email" && "Email copied!"}
+            {copiedText === "phone" && "Phone copied!"}
+            {copiedText === "company" && "Company copied!"}
+            {copiedText === "website" && "Website copied!"}
+            {copiedText === "whatsapp" && "WhatsApp copied!"}
+            {copiedText === "zalo" && "Zalo copied!"}
+            {copiedText === "wechat" && "WeChat ID copied!"}
+            {copiedText === "link" && "Profile link copied!"}
+          </span>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        url={typeof window !== 'undefined' ? window.location.href : ''}
+        title="My Profile QR Code"
+      />
     </div>
   );
 }
