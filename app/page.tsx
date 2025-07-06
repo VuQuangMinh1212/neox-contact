@@ -16,6 +16,14 @@ export default function ProfilePage() {
     window.open(`tel:${phoneNumber.replace(/[^0-9]/g, "")}`, "_self");
   };
 
+  const handleEmail = () => {
+    const emailAddress = "nguyenhoangmai193@gmail.com";
+    const subject = "Contact from Profile";
+    const body = "Hello Nguyễn Hoàng Mai,\n\nI found your profile and would like to get in touch.\n\nBest regards";
+    const mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink, "_self");
+  };
+
   const copyToClipboard = async (text: string, type: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -48,29 +56,33 @@ export default function ProfilePage() {
   const handleShare = async () => {
     setIsLoading(true);
     const url = window.location.href;
-    const title = "Check out my profile - Nguyễn Hoàng Mai";
-    const text = "International Business Solutions Consultant";
+    const title = "Nguyễn Hoàng Mai - International Business Solutions Consultant";
+    const text = "Check out my professional profile";
 
     if (navigator.share) {
       try {
         await navigator.share({ title, text, url });
       } catch (error) {
-        console.log("Sharing failed", error);
+        console.log("Sharing cancelled or failed", error);
       }
     } else {
-      // Fallback: Copy link to clipboard
-      try {
-        await navigator.clipboard.writeText(url);
-        setCopiedText("link");
-        setTimeout(() => setCopiedText(""), 2000);
-      } catch (error) {
-        // Fallback to social sharing
-        const shareLinks = {
-          facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-          twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title}\n${text}\n${url}`)}`,
-          linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-        };
-        Object.values(shareLinks).forEach((link) => window.open(link, "_blank"));
+      // Fallback: Open social sharing options
+      const shareUrl = encodeURIComponent(url);
+      const shareText = encodeURIComponent(`${title} - ${text}`);
+      
+      // Create a simple sharing menu or open multiple options
+      const confirm = window.confirm("Choose sharing method:\nOK = Facebook\nCancel = Copy link to clipboard");
+      
+      if (confirm) {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, "_blank", "width=600,height=400");
+      } else {
+        try {
+          await navigator.clipboard.writeText(url);
+          setCopiedText("link");
+          setTimeout(() => setCopiedText(""), 2000);
+        } catch (error) {
+          console.error("Failed to copy link:", error);
+        }
       }
     }
     setIsLoading(false);
@@ -119,10 +131,10 @@ export default function ProfilePage() {
               </button>
               <button
                 className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
-                onClick={() => copyToClipboard("nguyenhoangmai193@gmail.com", "email")}
-                title="Copy email"
+                onClick={handleEmail}
+                title="Send email"
               >
-                {copiedText === "email" ? <Check size={20} className="text-green-400" /> : <Mail size={20} />}
+                <Mail size={20} />
               </button>
               <button
                 className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
