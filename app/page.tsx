@@ -1,14 +1,29 @@
 "use client";
 
 import Image from "next/image";
-import { Phone, Mail, Share2, Building, LinkIcon, MapPin } from "lucide-react";
-import { useEffect } from "react";
+import { Phone, Mail, Share2, Building, LinkIcon, MapPin, Download, Copy, Check, QrCode } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import QRCodeModal from "../components/QRCodeModal";
 
 export default function ProfilePage() {
   const phoneNumber = "(+84) 93 780 2193";
+  const [isLoading, setIsLoading] = useState(false);
+  const [copiedText, setCopiedText] = useState("");
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [isPageLoaded, setIsPageLoaded] = useState(false);
 
   const handleCall = () => {
     window.open(`tel:${phoneNumber.replace(/[^0-9]/g, "")}`, "_self");
+  };
+
+  const copyToClipboard = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedText(type);
+      setTimeout(() => setCopiedText(""), 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
   };
 
   useEffect(() => {
@@ -19,12 +34,19 @@ export default function ProfilePage() {
     link.fetchPriority = "high";
     document.head.appendChild(link);
 
+    // Trigger page animations after a short delay
+    const timer = setTimeout(() => {
+      setIsPageLoaded(true);
+    }, 100);
+
     return () => {
       document.head.removeChild(link);
+      clearTimeout(timer);
     };
   }, []);
 
   const handleShare = async () => {
+    setIsLoading(true);
     const url = window.location.href;
     const title = "Check out my profile - Nguyễn Hoàng Mai";
     const text = "International Business Solutions Consultant";
@@ -36,29 +58,32 @@ export default function ProfilePage() {
         console.log("Sharing failed", error);
       }
     } else {
-      const shareLinks = {
-        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-          url
-        )}`,
-        twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          `${title}\n${text}\n${url}`
-        )}`,
-        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-          url
-        )}`,
-      };
-      Object.values(shareLinks).forEach((link) => window.open(link, "_blank"));
+      // Fallback: Copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopiedText("link");
+        setTimeout(() => setCopiedText(""), 2000);
+      } catch (error) {
+        // Fallback to social sharing
+        const shareLinks = {
+          facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+          twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title}\n${text}\n${url}`)}`,
+          linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+        };
+        Object.values(shareLinks).forEach((link) => window.open(link, "_blank"));
+      }
     }
+    setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen">
+    <div className={`min-h-screen transition-opacity duration-700 ${isPageLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <div className="relative min-h-[24rem]">
-        <div className="absolute top-0 left-0 w-full h-[5rem] bg-black" />
-        <div className="absolute top-[5rem] left-0 w-full h-[4rem] md:h-[5rem] bg-black" />
-        <div className="relative z-10 bg-transparent flex items-center justify-center mt-[-2rem] pt-16">
+        <div className={`absolute top-0 left-0 w-full h-[5rem] bg-black transition-transform duration-500 ${isPageLoaded ? 'translate-y-0' : '-translate-y-full'}`} />
+        <div className={`absolute top-[5rem] left-0 w-full h-[4rem] md:h-[5rem] bg-black transition-transform duration-700 ${isPageLoaded ? 'translate-y-0' : '-translate-y-full'}`} />
+        <div className={`relative z-10 bg-transparent flex items-center justify-center mt-[-2rem] pt-16 transition-all duration-1000 ${isPageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
           <div className="container mx-auto px-0 md:px-0 lg:px-0 flex flex-col items-center">
-            <div className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-white overflow-hidden mb-2 p-0 m-0 relative">
+            <div className={`w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-white overflow-hidden mb-2 p-0 m-0 relative transition-all duration-1000 delay-200 ${isPageLoaded ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}>
               <Image
                 src="/image-profile.JPG"
                 alt="Nguyễn Hoàng Mai"
@@ -75,35 +100,50 @@ export default function ProfilePage() {
                 }}
               />
             </div>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">
+            <h1 className={`text-xl md:text-2xl lg:text-3xl font-bold text-white transition-all duration-1000 delay-400 ${isPageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
               Nguyễn Hoàng Mai
             </h1>
-            <p className="text-sm md:text-base text-white mb-1">
+            <p className={`text-sm md:text-base text-white mb-1 transition-all duration-1000 delay-500 ${isPageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
               International Business
             </p>
-            <p className="text-sm md:text-base text-white mb-5">
+            <p className={`text-sm md:text-base text-white mb-5 transition-all duration-1000 delay-600 ${isPageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
               Solutions Consultant
             </p>
-            <div className="flex gap-6 mb-6">
+            <div className={`flex gap-6 mb-6 transition-all duration-1000 delay-700 ${isPageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
               <button
-                className="icon-button hover:bg-zinc-500 transition-colors"
+                className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
                 onClick={handleCall}
+                title="Call me"
               >
                 <Phone size={20} />
               </button>
               <button
-                className="icon-button hover:bg-zinc-500 transition-colors"
-                onClick={() =>
-                  (window.location.href = "mailto:nguyenhoangmai193@gmail.com")
-                }
+                className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
+                onClick={() => copyToClipboard("nguyenhoangmai193@gmail.com", "email")}
+                title="Copy email"
               >
-                <Mail size={20} />
+                {copiedText === "email" ? <Check size={20} className="text-green-400" /> : <Mail size={20} />}
               </button>
               <button
-                className="icon-button hover:bg-zinc-500 transition-colors"
+                className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
                 onClick={handleShare}
+                disabled={isLoading}
+                title="Share profile"
               >
-                <Share2 size={20} />
+                {isLoading ? (
+                  <div className="loading-spinner" />
+                ) : copiedText === "link" ? (
+                  <Check size={20} className="text-green-400" />
+                ) : (
+                  <Share2 size={20} />
+                )}
+              </button>
+              <button
+                className="icon-button hover:bg-zinc-500 transition-colors pulse-on-hover"
+                onClick={() => setIsQRModalOpen(true)}
+                title="Show QR Code"
+              >
+                <QrCode size={20} />
               </button>
             </div>
             {false && (
@@ -120,7 +160,7 @@ export default function ProfilePage() {
       </div>
 
       {/* About Section */}
-      <section className="py-0 flex items-center justify-center bg-zinc-600">
+      <section className="py-0 flex items-center justify-center bg-zinc-600 opacity-0 animate-fade-in" style={{ animationDelay: '1.2s', animationFillMode: 'both' }}>
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 flex flex-col">
           <div className="py-4 border-b border-white mb-4">
             <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-center">
@@ -182,7 +222,7 @@ export default function ProfilePage() {
       </section>
 
       {/* Socials Section */}
-      <section className="py-0 flex items-center justify-center bg-zinc-600">
+      <section className="py-0 flex items-center justify-center bg-zinc-600 opacity-0 animate-fade-in" style={{ animationDelay: '1.4s', animationFillMode: 'both' }}>
         <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 flex flex-col">
           <div className="py-4 border-b border-white mb-4">
             <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-center">
@@ -350,6 +390,25 @@ END:VCARD`;
           </div>
         </div>
       </section>
+
+      {/* Toast notification for copy actions */}
+      {copiedText && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg fade-in flex items-center gap-2 z-50">
+          <Check size={16} />
+          <span>
+            {copiedText === "email" && "Email copied!"}
+            {copiedText === "link" && "Profile link copied!"}
+          </span>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        url={typeof window !== 'undefined' ? window.location.href : ''}
+        title="My Profile QR Code"
+      />
     </div>
   );
 }
