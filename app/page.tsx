@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Phone, Mail, Share2, Building, LinkIcon, MapPin, Download, Copy, Check, QrCode } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { Phone, Mail, Share2, Building, LinkIcon, MapPin, Check, QrCode } from "lucide-react";
+import { useEffect, useState } from "react";
 import QRCodeModal from "../components/QRCodeModal";
 
 export default function ProfilePage() {
