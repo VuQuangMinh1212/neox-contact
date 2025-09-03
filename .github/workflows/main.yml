@@ -50,7 +50,7 @@ jobs:
       - name: Add host to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H quangminh1212.ddns.net >> ~/.ssh/known_hosts
+          ssh-keyscan -H -p 2250 quangminh1212.ddns.net >> ~/.ssh/known_hosts
 
       - name: Connect, Pull, and Build Docker
         run: |
