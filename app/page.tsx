@@ -24,16 +24,6 @@ export default function ProfilePage() {
     window.open(mailtoLink, "_self");
   };
 
-  const copyToClipboard = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedText(type);
-      setTimeout(() => setCopiedText(""), 2000);
-    } catch (error) {
-      console.error("Failed to copy:", error);
-    }
-  };
-
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "preload";
@@ -42,7 +32,6 @@ export default function ProfilePage() {
     link.fetchPriority = "high";
     document.head.appendChild(link);
 
-    // Trigger page animations after a short delay
     const timer = setTimeout(() => {
       setIsPageLoaded(true);
     }, 100);
@@ -66,11 +55,8 @@ export default function ProfilePage() {
         console.log("Sharing cancelled or failed", error);
       }
     } else {
-      // Fallback: Open social sharing options
       const shareUrl = encodeURIComponent(url);
-      const shareText = encodeURIComponent(`${title} - ${text}`);
       
-      // Create a simple sharing menu or open multiple options
       const confirm = window.confirm("Choose sharing method:\nOK = Facebook\nCancel = Copy link to clipboard");
       
       if (confirm) {

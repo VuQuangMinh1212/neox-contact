@@ -1,12 +1,23 @@
-FROM node:18
+# Stage 1: Build Next.js app
+FROM node:18 AS builder
 
-RUN mkdir -p /tmp && chmod 1777 /tmp
-RUN df -h
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+# Stage 2: Run Next.js app
+FROM node:18
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --no-optional --no-audit && npm cache clean --force
-COPY . .
-RUN npm run build
+RUN npm install --only=production && npm cache clean --force
+
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+
 EXPOSE 3000
 CMD ["npm", "run", "start"]
