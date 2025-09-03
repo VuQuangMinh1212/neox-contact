@@ -54,7 +54,7 @@ jobs:
 
       - name: Connect, Pull, and Build Docker
         run: |
-          ssh quangminh@quangminh1212.ddns.net << EOF
+          ssh -p 2250 quangminh@quangminh1212.ddns.net << EOF
             set -e
             cd /home/quangminh/next
             echo "${{ secrets.SSH_PASS }}" | sudo -S docker compose pull neox-contact
