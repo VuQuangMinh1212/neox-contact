@@ -56,7 +56,7 @@ jobs:
         run: |
           ssh quangminh@quangminh1212.ddns.net << EOF
             set -e
-            cd /home/quangminh/Documents/landingpage
-            echo "${{ secrets.SSH_PASS }}" | sudo -S docker compose pull landingpage
+            cd /home/quangminh/next
+            echo "${{ secrets.SSH_PASS }}" | sudo -S docker compose pull neox-contact
             echo "${{ secrets.SSH_PASS }}" | sudo -S docker compose up -d
           EOF
